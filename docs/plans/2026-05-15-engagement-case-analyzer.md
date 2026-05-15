@@ -354,6 +354,13 @@ These are not blockers — the plan ships sensible defaults; T8 (Flow wiring) re
 
 ---
 
+### Deployment
+
+- **Solution ID:** `ed83f205-57b5-45f7-a650-08deb25d7f2c`
+- **Studio Web URL:** https://staging.uipath.com/uipathtamorlandin/studio_/designer/31799933-af7b-4cae-9ed6-4cde00bc1657?solutionId=ed83f205-57b5-45f7-a650-08deb25d7f2c
+- **Org:** `uipathtamorlandin` on `https://staging.uipath.com`
+- **Uploaded:** 2026-05-15 by agent
+
 ### Notes
 
 - **Live task emission skipped.** This session's `TaskCreate` MCP tool is disconnected. Once it's available again, this plan can be re-loaded and the planner can emit one live task per row above (`addBlockedBy` edges per the `Blocked by` lines).
