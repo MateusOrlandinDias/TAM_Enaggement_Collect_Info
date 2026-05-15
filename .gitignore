@@ -1,0 +1,18 @@
+# UiPath
+.local/
+.objects/
+*.deployment.json
+TestResults/
+.screenshots/
+
+# Claude Code
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vs/
+.vscode/
+*.user
