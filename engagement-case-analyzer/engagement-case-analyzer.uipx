@@ -1,0 +1,12 @@
+{
+  "DocVersion": "1.0.0",
+  "StudioMinVersion": "2025.10.0",
+  "SolutionId": "ec5ce4b8-d239-4bb2-81d2-c6309532ed9a",
+  "Projects": [
+    {
+      "Type": "Flow",
+      "ProjectRelativePath": "engagement-flow\\project.uiproj",
+      "Id": "263a1cb1-f84f-4cde-85b4-b97a89ffb1ff"
+    }
+  ]
+}
