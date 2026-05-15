@@ -36,27 +36,41 @@ The automation periodically lists Salesforce Cases where `Status = "New"`, inspe
 
 ## Salesforce Data Contract
 
-### Cases read (filter `Status = 'New'`)
+### Cases read (filter `Status = 'New' AND OwnerId = $current_user_id`)
+"My cases" = cases owned by the engagement orchestrator user (Mateus Dias in the example). The Owner is the case orchestrator; the **Primary TAM is the Case Contact** (standard `ContactId` field), which in this org points to an internal UiPath staff member, not an external customer contact.
+
 Fields retrieved per Case:
 - `Id`
 - `CaseNumber`
 - `Subject`
-- `Description`
+- `Description`  *(rich text — strip HTML before passing to the Agent)*
 - `Status`
-- `Account.Id`, `Account.Name`
+- `Priority`
 - `OwnerId`
-- `Owner.Id`, `Owner.Name`, `Owner.Type` *(only `User` type can be @-mentioned in Chatter — `Queue` cannot)*
-- Custom Primary TAM field, if present in this org (e.g. `Primary_TAM__c` → resolves to a `User.Id`). Resolved at execution time per Open Question 2.
+- `Account.Id`, `Account.Name`
+- `Account_Type__c`  *(formula text — e.g. "Enterprise", "Platinum Tier" — surfaced in the reviewer UI)*
+- `Engagement_Category__c`  *(e.g. "Enablement and Adoption" — feeds the Agent prompt)*
+- `ContactId`
+- `Contact.Id`, `Contact.Name`, `Contact.Email`, `Contact.FirstName`  → the Primary TAM
 - Custom products-list field, if present (e.g. `Products_Mentioned__c`); otherwise inferred by the Agent from `Description` per Open Question 3.
 
-### Link templates
-- Customer (Account) URL: `https://<instance>.lightning.force.com/lightning/r/Account/<Account.Id>/view`
-- Case URL: `https://<instance>.lightning.force.com/lightning/r/Case/<Case.Id>/view`
+### Primary TAM resolution (Contact → User)
+The Chatter @mention requires a Salesforce `User.Id`, but the Primary TAM is stored on the Case as a `Contact`. Resolution path in Flow (T8):
+
+```
+Case.Contact.Email  →  User.Email lookup  →  primary_tam_user_id (User.Id)
+```
+
+Failure of this lookup (Contact has no matching User, or `IsActive = false`) is a stop condition — the Chatter @mention payload cannot be constructed without a valid User.Id.
+
+### Link templates (org instance: `uipath.lightning.force.com`)
+- Customer (Account) URL: `https://uipath.lightning.force.com/lightning/r/Account/<Account.Id>/view`
+- Case URL: `https://uipath.lightning.force.com/lightning/r/Case/<Case.Id>/view`
 
 ### Chatter @mention payload (post on Case feed)
 - Action: Salesforce IS — **Post Chatter feed comment** on parent `Case.Id`.
 - Body segments:
-  - `MentionSegmentInput` with `id = primary_tam_user_id`
+  - `MentionSegmentInput` with `id = primary_tam_user_id`  *(resolved via Contact.Email → User.Email, see above)*
   - `TextSegmentInput` with the rendered outreach message
 - Outreach message template (Flow renders at runtime):
 
@@ -143,9 +157,9 @@ Rules enforced in the prompt:
 
 ```
 1. Trigger fires (schedule per Open Question 1).
-2. Flow → Salesforce.QueryCases(Status='New', fields per §Salesforce Data Contract).
+2. Flow → Salesforce.QueryCases(Status='New' AND OwnerId=$current_user_id, fields per §Salesforce Data Contract).
 3. ForEach Case:
-   a. Flow resolves primary_tam_user_id + customer_link + case_link.
+   a. Flow resolves primary_tam_user_id (Contact.Email → User.Email lookup) + customer_link + case_link.
    b. Flow → Agent.Analyze(case payload) → sufficiency JSON.
    c. Flow → ActionCenter.CreateTask(engagement-case-review, input per §HITL Task Schema).
 4. Reviewer opens the Coded App, sees the case queue, reviews fields + suggested questions,
@@ -161,11 +175,12 @@ Rules enforced in the prompt:
 ## Open questions for the user
 
 1. **Trigger cadence** — schedule (every N hours) or webhook on Case insert / Status change? Default: schedule every 2h during business hours.
-2. **Primary TAM field** — is there a custom Salesforce field (e.g. `Primary_TAM__c`) or is `Case.OwnerId` always the TAM? Affects T1 and T8.
+2. ~~**Primary TAM field**~~ — **Resolved**: Primary TAM is `Case.Contact` (standard `ContactId`); resolved to a `User.Id` via `Contact.Email → User.Email` for the Chatter @mention. See §Salesforce Data Contract.
 3. **Products list source** — custom field listing products, or have the Agent infer from `Description`? Affects T4.
 4. **Reject behavior** — on reject, post a different Chatter note or close silently? Default: silent close.
 5. **Edit mode** — can the reviewer add free-form questions alongside editing suggested ones? Default: yes.
 6. **Outreach message tone** — confirm the template in §Salesforce Data Contract or supply preferred copy.
+7. **Contact-to-User mapping fallback** — when `Contact.Email` has no matching `User.Email` (e.g. the TAM Contact is unlinked, inactive, or domain-mismatched), should Flow skip the case, post Chatter without an @mention, or surface the failure to the reviewer? Default: surface in the reviewer UI as "TAM not resolvable — Chatter @mention will be plain text" and let them decide.
 
 These are not blockers — the plan ships sensible defaults; T8 (Flow wiring) re-asks any item still unresolved at execution time.
 
