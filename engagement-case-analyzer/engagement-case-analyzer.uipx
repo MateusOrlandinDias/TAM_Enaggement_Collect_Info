@@ -7,6 +7,11 @@
       "Type": "Flow",
       "ProjectRelativePath": "engagement-flow\\project.uiproj",
       "Id": "263a1cb1-f84f-4cde-85b4-b97a89ffb1ff"
+    },
+    {
+      "Type": "Agent",
+      "ProjectRelativePath": "case-sufficiency-agent\\project.uiproj",
+      "Id": "b94f4d94-b38e-46ba-a2e0-baed924ca6fc"
     }
   ]
 }

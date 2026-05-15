@@ -1,0 +1,8 @@
+{
+  "scope": "OR.Tasks OR.Tasks.Read OR.Tasks.Write",
+  "clientId": "",
+  "orgName": "uipathtamorlandin",
+  "tenantName": "Development",
+  "baseUrl": "https://staging.uipath.com",
+  "redirectUri": ""
+}

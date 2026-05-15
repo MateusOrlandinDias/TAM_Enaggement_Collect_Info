@@ -1,0 +1,37 @@
+{
+  "$schema": "https://cloud.uipath.com/draft/2024-12/entry-point",
+  "$id": "entry-points.json",
+  "entryPoints": [
+    {
+      "filePath": "/content/agent.json",
+      "uniqueId": "ed222184-c45c-4061-aa6e-574702a3c124",
+      "type": "agent",
+      "input": {
+        "type": "object",
+        "properties": {
+          "case_id": { "type": "string" },
+          "case_number": { "type": "string" },
+          "subject": { "type": "string" },
+          "description": { "type": "string" },
+          "engagement_category": { "type": "string" },
+          "products_mentioned": { "type": "array", "items": { "type": "string" } },
+          "customer_name": { "type": "string" }
+        },
+        "required": ["case_id", "case_number", "customer_name", "description", "subject"]
+      },
+      "output": {
+        "type": "object",
+        "properties": {
+          "audience_sufficient": { "type": "boolean" },
+          "ask_sufficient": { "type": "boolean" },
+          "maturity_sufficient": { "type": "boolean" },
+          "missing_dimensions": { "type": "array", "items": { "type": "string" } },
+          "needs_questions": { "type": "boolean" },
+          "suggested_questions": { "type": "array", "items": { "type": "string" } },
+          "products_mentioned": { "type": "array", "items": { "type": "string" } },
+          "reasoning_note": { "type": "string" }
+        }
+      }
+    }
+  ]
+}

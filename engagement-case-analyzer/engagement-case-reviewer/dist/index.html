@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Engagement Case Reviewer</title>
+  <script src="https://cdn.uipath.com/apps/uipath-typescript/latest/uipath.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f4f5f7;
+      color: #172b4d;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #0176d3;
+      color: #fff;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    header h1 { font-size: 1.15rem; font-weight: 600; }
+    header .badge {
+      background: rgba(255,255,255,0.2);
+      border-radius: 12px;
+      padding: 0.15rem 0.6rem;
+      font-size: 0.8rem;
+    }
+
+    /* ── Layout ── */
+    main { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem; }
+
+    /* ── States ── */
+    .state-msg {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #6b778c;
+    }
+    .state-msg h2 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .spinner {
+      width: 2rem; height: 2rem;
+      border: 3px solid #dfe1e6;
+      border-top-color: #0176d3;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Case Card ── */
+    .case-card {
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+      transition: box-shadow 0.15s;
+    }
+    .case-card:hover { box-shadow: 0 3px 8px rgba(0,0,0,0.12); }
+    .case-card.decided { opacity: 0.55; }
+
+    .card-header {
+      padding: 0.9rem 1.2rem;
+      border-bottom: 1px solid #dfe1e6;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .card-header-left { flex: 1; min-width: 0; }
+    .card-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem; }
+    .chip {
+      border-radius: 12px;
+      padding: 0.15rem 0.55rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .chip-case   { background: #e9f0ff; color: #0049b0; }
+    .chip-pri    { background: #fff3cc; color: #7a5200; }
+    .chip-cat    { background: #e3f5e1; color: #1d6325; }
+    .chip-type   { background: #f0eaff; color: #5600c0; }
+
+    .case-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.3rem; }
+    .case-links { display: flex; gap: 1rem; font-size: 0.8rem; }
+    .case-links a { color: #0176d3; text-decoration: none; }
+    .case-links a:hover { text-decoration: underline; }
+
+    .tam-badge {
+      background: #f1f3f5;
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+    .tam-badge .label { color: #6b778c; font-size: 0.72rem; text-transform: uppercase; margin-bottom: 0.15rem; }
+    .tam-badge .name { font-weight: 600; }
+
+    .card-body { padding: 1rem 1.2rem; }
+
+    .section-title {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #6b778c;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+
+    .description-text {
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: #253858;
+      white-space: pre-wrap;
+      max-height: 10rem;
+      overflow-y: auto;
+      padding: 0.5rem 0.75rem;
+      background: #f8f9fa;
+      border-radius: 4px;
+      border: 1px solid #dfe1e6;
+    }
+
+    /* ── Questions Section ── */
+    .questions-section {
+      margin-top: 1rem;
+      padding: 0.9rem 1rem;
+      background: #fffae6;
+      border-left: 3px solid #f5a623;
+      border-radius: 0 4px 4px 0;
+    }
+    .questions-section .section-title { color: #7a5200; }
+
+    .question-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .question-row:last-child { margin-bottom: 0; }
+    .question-num {
+      color: #f5a623;
+      font-weight: 700;
+      font-size: 0.85rem;
+      min-width: 1.4rem;
+      padding-top: 0.3rem;
+    }
+    .question-row textarea {
+      flex: 1;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      padding: 0.4rem 0.6rem;
+      border: 1px solid #dfe1e6;
+      border-radius: 4px;
+      resize: vertical;
+      min-height: 2.4rem;
+      font-family: inherit;
+    }
+    .question-row textarea:focus { outline: none; border-color: #0176d3; box-shadow: 0 0 0 2px rgba(1,118,211,0.15); }
+    .question-row .del-btn {
+      background: none; border: none; cursor: pointer;
+      color: #aaa; padding: 0.4rem; border-radius: 4px;
+      font-size: 1rem; line-height: 1;
+    }
+    .question-row .del-btn:hover { color: #de350b; background: #ffebe6; }
+
+    .no-questions-banner {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: #e3f5e1;
+      border-left: 3px solid #36b37e;
+      border-radius: 0 4px 4px 0;
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: #1d6325;
+      font-weight: 500;
+    }
+
+    .reasoning-note {
+      margin-top: 0.6rem;
+      font-size: 0.78rem;
+      color: #7a5200;
+      font-style: italic;
+    }
+
+    /* ── Card Footer ── */
+    .card-footer {
+      padding: 0.85rem 1.2rem;
+      border-top: 1px solid #dfe1e6;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: #fafbfc;
+      flex-wrap: wrap;
+    }
+    .card-footer .reviewer-comment {
+      flex: 1; min-width: 12rem;
+    }
+    .card-footer .reviewer-comment input {
+      width: 100%;
+      padding: 0.4rem 0.6rem;
+      border: 1px solid #dfe1e6;
+      border-radius: 4px;
+      font-size: 0.83rem;
+      font-family: inherit;
+    }
+    .card-footer .reviewer-comment input:focus { outline: none; border-color: #0176d3; }
+    .card-footer .reviewer-comment input::placeholder { color: #aaa; }
+
+    .btn {
+      padding: 0.45rem 1.1rem;
+      border: none; border-radius: 4px;
+      font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: filter 0.1s;
+    }
+    .btn:hover { filter: brightness(0.9); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
+
+    .btn-approve  { background: #36b37e; color: #fff; }
+    .btn-edit     { background: #0176d3; color: #fff; }
+    .btn-reject   { background: #fff; color: #de350b; border: 1px solid #de350b; }
+
+    /* ── Decision Badge ── */
+    .decision-badge {
+      padding: 0.6rem 1rem;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    .decision-approve { background: #e3f5e1; color: #1d6325; }
+    .decision-edit    { background: #e9f0ff; color: #0049b0; }
+    .decision-reject  { background: #ffebe6; color: #de350b; }
+  </style>
+</head>
+<body>
+
+<header>
+  <svg width="22" height="22" viewBox="0 0 520 520" fill="white" aria-hidden="true">
+    <path d="M380 290h40c6 0 10-4 10-10v-30h140v30c0 6 4 10 10 10h40c6 0 10-4 10-10v-30c0-33-27-60-60-60H430c-33 0-60 27-60 60v30c0 6 4 10 10 10m360 60H260c-33 0-60 27-60 60v320c0 33 27 60 60 60h480c33 0 60-27 60-60V410c0-33-27-60-60-60"/>
+  </svg>
+  <h1>Engagement Case Reviewer</h1>
+  <span class="badge" id="task-count">Loading…</span>
+</header>
+
+<main>
+  <div id="loading" class="state-msg">
+    <div class="spinner"></div>
+    <h2>Loading cases…</h2>
+    <p>Fetching pending engagement cases from Action Center.</p>
+  </div>
+
+  <div id="empty" class="state-msg" style="display:none">
+    <h2>🎉 No pending cases</h2>
+    <p>All New engagement cases have been reviewed. Check back after the next Flow run.</p>
+  </div>
+
+  <div id="error" class="state-msg" style="display:none">
+    <h2>⚠ Could not load tasks</h2>
+    <p id="error-msg"></p>
+  </div>
+
+  <div id="cards-container"></div>
+</main>
+
+<script>
+  const TASK_TYPE = 'engagement-case-review';
+
+  /* ── SDK initialisation ──────────────────────────────────── */
+  const sdk = window.UiPath || window.uipath;
+
+  function getEl(id) { return document.getElementById(id); }
+
+  function showState(state) {
+    ['loading','empty','error','cards-container'].forEach(id => {
+      const el = getEl(id);
+      if (el) el.style.display = (id === state || (state === 'cards' && id === 'cards-container')) ? '' : 'none';
+    });
+  }
+
+  /* ── Build a card for one task ───────────────────────────── */
+  function renderCard(task) {
+    const d = task.inputData || {};
+    const taskId = task.id || task.taskId;
+    const card = document.createElement('div');
+    card.className = 'case-card';
+    card.id = 'card-' + taskId;
+
+    const questions = Array.isArray(d.suggested_questions) ? [...d.suggested_questions] : [];
+    const needsQ = d.needs_questions === true;
+
+    // ── Header
+    const metaChips = [
+      d.case_number   ? `<span class="chip chip-case">Case #${d.case_number}</span>` : '',
+      d.priority      ? `<span class="chip chip-pri">${d.priority}</span>` : '',
+      d.engagement_category ? `<span class="chip chip-cat">${d.engagement_category}</span>` : '',
+      d.account_type  ? `<span class="chip chip-type">${d.account_type}</span>` : '',
+    ].filter(Boolean).join('');
+
+    const customerHtml = d.customer_link
+      ? `<a href="${d.customer_link}" target="_blank" rel="noopener">${d.customer_name || 'Customer'} ↗</a>`
+      : `<span>${d.customer_name || ''}</span>`;
+
+    const caseHtml = d.case_link
+      ? `<a href="${d.case_link}" target="_blank" rel="noopener">Open in Salesforce ↗</a>`
+      : '';
+
+    const tamNotice = (!d.primary_tam_user_id)
+      ? `<div style="color:#de350b;font-size:0.75rem;margin-top:0.3rem;">⚠ TAM User not resolvable — @mention will be plain text</div>`
+      : '';
+
+    // ── Questions list (editable)
+    let questionsHtml = '';
+    if (needsQ && questions.length > 0) {
+      const rows = questions.map((q, i) =>
+        `<div class="question-row">
+          <span class="question-num">${i + 1}.</span>
+          <textarea data-idx="${i}" class="q-input">${q}</textarea>
+          <button class="del-btn" data-idx="${i}" title="Remove question">×</button>
+        </div>`
+      ).join('');
+      const reasoning = d.agent_reasoning
+        ? `<div class="reasoning-note">Agent note: ${d.agent_reasoning}</div>` : '';
+      questionsHtml = `
+        <div class="questions-section" id="qs-${taskId}">
+          <div class="section-title">Suggested Clarifying Questions — edit or remove before approving</div>
+          ${rows}
+          ${reasoning}
+        </div>`;
+    } else if (!needsQ) {
+      questionsHtml = `
+        <div class="no-questions-banner">
+          ✅ Description is complete — no clarifying questions needed. Approve to send confirmation outreach.
+        </div>`;
+    }
+
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-header-left">
+          <div class="card-meta">${metaChips}</div>
+          <div class="case-title">${d.subject || '(no subject)'}</div>
+          <div class="case-links">${customerHtml}${caseHtml ? ' · ' + caseHtml : ''}</div>
+        </div>
+        <div class="tam-badge">
+          <div class="label">Primary TAM</div>
+          <div class="name">${d.primary_tam_name || '—'}</div>
+          ${tamNotice}
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="section-title">Case Description</div>
+        <div class="description-text">${(d.description || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+        ${questionsHtml}
+      </div>
+      <div class="card-footer">
+        <div class="reviewer-comment">
+          <input type="text" id="comment-${taskId}" placeholder="Internal comment (optional, not posted to Chatter)" />
+        </div>
+        <button class="btn btn-approve" id="approve-${taskId}">✓ Approve</button>
+        ${needsQ ? `<button class="btn btn-edit" id="edit-${taskId}">✎ Edit &amp; Approve</button>` : ''}
+        <button class="btn btn-reject" id="reject-${taskId}">✕ Reject</button>
+      </div>`;
+
+    // ── Wire delete buttons
+    card.querySelectorAll('.del-btn').forEach(btn => {
+      btn.addEventListener('click', () => { btn.closest('.question-row').remove(); });
+    });
+
+    // ── Wire action buttons
+    function collect() {
+      const qs = [...card.querySelectorAll('.q-input')].map(t => t.value.trim()).filter(Boolean);
+      const comment = (getEl('comment-' + taskId) || {}).value || '';
+      return { qs, comment };
+    }
+
+    function markDecided(label, cls) {
+      card.classList.add('decided');
+      const footer = card.querySelector('.card-footer');
+      footer.innerHTML = `<div class="decision-badge ${cls}">${label}</div>`;
+    }
+
+    async function complete(decision, finalQuestions) {
+      const { comment } = collect();
+      const btn = card.querySelector(`#${decision === 'approve' ? 'approve' : decision === 'edit' ? 'edit' : 'reject'}-${taskId}`);
+      if (btn) btn.disabled = true;
+      try {
+        await sdk.tasks.complete(taskId, {
+          decision,
+          final_questions: finalQuestions || [],
+          reviewer_comment: (getEl('comment-' + taskId) || {}).value || ''
+        });
+        const labels = { approve: '✓ Approved — outreach will be posted', edit: '✎ Edit approved — outreach will be posted', reject: '✕ Rejected — case skipped' };
+        const clss   = { approve: 'decision-approve', edit: 'decision-edit', reject: 'decision-reject' };
+        markDecided(labels[decision], clss[decision]);
+        updateCount();
+      } catch (err) {
+        alert('Error completing task: ' + (err.message || err));
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    getEl('approve-' + taskId)?.addEventListener('click', () => complete('approve', []));
+    getEl('edit-' + taskId)?.addEventListener('click', () => {
+      const { qs } = collect();
+      complete('edit', qs);
+    });
+    getEl('reject-' + taskId)?.addEventListener('click', () => complete('reject', []));
+
+    return card;
+  }
+
+  /* ── Count helper ────────────────────────────────────────── */
+  function updateCount() {
+    const pending = document.querySelectorAll('.case-card:not(.decided)').length;
+    const badge = getEl('task-count');
+    if (badge) badge.textContent = pending > 0 ? `${pending} pending` : 'All reviewed';
+  }
+
+  /* ── Main load ───────────────────────────────────────────── */
+  async function loadTasks() {
+    showState('loading');
+    try {
+      // UiPath Action Center SDK: list tasks by type
+      const result = await sdk.tasks.list({ taskType: TASK_TYPE, status: 'Pending' });
+      const tasks = Array.isArray(result) ? result : (result?.items || result?.value || []);
+
+      if (tasks.length === 0) {
+        showState('empty');
+        getEl('task-count').textContent = '0 pending';
+        return;
+      }
+
+      const container = getEl('cards-container');
+      container.innerHTML = '';
+      tasks.forEach(t => container.appendChild(renderCard(t)));
+      showState('cards');
+      updateCount();
+    } catch (err) {
+      showState('error');
+      getEl('error-msg').textContent = err.message || String(err);
+    }
+  }
+
+  /* ── Boot ────────────────────────────────────────────────── */
+  if (sdk && sdk.ready) {
+    sdk.ready(loadTasks);
+  } else if (sdk) {
+    loadTasks();
+  } else {
+    showState('error');
+    getEl('error-msg').textContent = 'UiPath SDK not loaded. Check that the app is running inside UiPath.';
+  }
+</script>
+</body>
+</html>

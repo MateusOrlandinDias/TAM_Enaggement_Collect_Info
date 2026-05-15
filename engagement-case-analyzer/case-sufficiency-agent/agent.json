@@ -1,0 +1,132 @@
+{
+  "version": "1.1.0",
+  "settings": {
+    "model": "gpt-4o-2024-11-20",
+    "maxTokens": 2048,
+    "temperature": 0,
+    "engine": "basic-v2",
+    "maxIterations": 1,
+    "mode": "standard"
+  },
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "case_id": {
+        "type": "string",
+        "description": "Salesforce Case record Id (18-char)"
+      },
+      "case_number": {
+        "type": "string",
+        "description": "Human-readable case number (e.g. 02887690)"
+      },
+      "subject": {
+        "type": "string",
+        "description": "Case subject line"
+      },
+      "description": {
+        "type": "string",
+        "description": "Plain-text case description (HTML already stripped)"
+      },
+      "engagement_category": {
+        "type": "string",
+        "description": "Engagement category from Salesforce (e.g. Enablement and Adoption)"
+      },
+      "products_mentioned": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "UiPath products mentioned in the description (pre-extracted or inferred)"
+      },
+      "customer_name": {
+        "type": "string",
+        "description": "Customer account name"
+      }
+    },
+    "required": ["case_id", "case_number", "subject", "description", "customer_name"]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "audience_sufficient": {
+        "type": "boolean",
+        "description": "true if the description clearly identifies who the audience is (e.g. leadership, developers, operations team)"
+      },
+      "ask_sufficient": {
+        "type": "boolean",
+        "description": "true if the description clearly states what the customer wants to achieve or learn"
+      },
+      "maturity_sufficient": {
+        "type": "boolean",
+        "description": "true if the description gives enough context about the customer's current maturity with the products mentioned"
+      },
+      "missing_dimensions": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "List of dimension names that are insufficient: 'audience', 'ask', 'maturity'"
+      },
+      "needs_questions": {
+        "type": "boolean",
+        "description": "true when at least one dimension is insufficient"
+      },
+      "suggested_questions": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Up to 5 clarifying questions for the Primary TAM. Empty array when needs_questions=false."
+      },
+      "products_mentioned": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Products inferred from the description if not provided in input"
+      },
+      "reasoning_note": {
+        "type": "string",
+        "description": "One-sentence explanation of what is missing and why questions were generated"
+      }
+    },
+    "required": [
+      "audience_sufficient", "ask_sufficient", "maturity_sufficient",
+      "missing_dimensions", "needs_questions", "suggested_questions",
+      "products_mentioned", "reasoning_note"
+    ]
+  },
+  "metadata": {
+    "storageVersion": "50.0.0",
+    "isConversational": false,
+    "showProjectCreationExperience": false,
+    "targetRuntime": "pythonAgent"
+  },
+  "type": "lowCode",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are an engagement readiness analyst for a UiPath Technical Account Manager. Your job is to read a Salesforce Case description and assess whether it contains enough information for a TAM to plan and execute an engagement session with the customer.\n\nYou assess three dimensions:\n1. **Audience** — Is it clear who will attend or benefit from the engagement? (e.g. leadership, developers, operations team, a specific department)\n2. **Ask** — Is it clear what the customer wants to achieve, learn, or solve? (e.g. understand ROI dashboards, automate a specific process, see advanced Insights features)\n3. **Maturity** — Is there enough context about the customer's current level with the products mentioned? (e.g. just starting, running in production, wanting to go beyond OOTB templates)\n\nRules:\n- If a dimension is partially described but gives enough for the TAM to start planning, mark it as sufficient.\n- If a dimension is vague, missing entirely, or ambiguous, mark it as insufficient.\n- Generate clarifying questions ONLY for insufficient dimensions.\n- Maximum 5 questions total — prioritise quality over quantity.\n- For each product mentioned, add one maturity-specific question if maturity is insufficient (e.g. 'What is the customer's current maturity with UiPath Insights — are they using OOTB dashboards or have they built custom ones?').\n- When all three dimensions are sufficient, return needs_questions=false and suggested_questions=[].\n- Infer products_mentioned from the description if not provided in input.\n- Always return valid JSON matching the output schema exactly. Do not wrap in markdown code blocks.",
+      "contentTokens": [
+        {
+          "type": "simpleText",
+          "rawString": "You are an engagement readiness analyst for a UiPath Technical Account Manager. Your job is to read a Salesforce Case description and assess whether it contains enough information for a TAM to plan and execute an engagement session with the customer.\n\nYou assess three dimensions:\n1. **Audience** — Is it clear who will attend or benefit from the engagement? (e.g. leadership, developers, operations team, a specific department)\n2. **Ask** — Is it clear what the customer wants to achieve, learn, or solve? (e.g. understand ROI dashboards, automate a specific process, see advanced Insights features)\n3. **Maturity** — Is there enough context about the customer's current level with the products mentioned? (e.g. just starting, running in production, wanting to go beyond OOTB templates)\n\nRules:\n- If a dimension is partially described but gives enough for the TAM to start planning, mark it as sufficient.\n- If a dimension is vague, missing entirely, or ambiguous, mark it as insufficient.\n- Generate clarifying questions ONLY for insufficient dimensions.\n- Maximum 5 questions total — prioritise quality over quantity.\n- For each product mentioned, add one maturity-specific question if maturity is insufficient (e.g. 'What is the customer's current maturity with UiPath Insights — are they using OOTB dashboards or have they built custom ones?').\n- When all three dimensions are sufficient, return needs_questions=false and suggested_questions=[].\n- Infer products_mentioned from the description if not provided in input.\n- Always return valid JSON matching the output schema exactly. Do not wrap in markdown code blocks."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": "Analyse this engagement case and return your assessment as JSON.\n\nCase Number: {{input.case_number}}\nCustomer: {{input.customer_name}}\nEngagement Category: {{input.engagement_category}}\nSubject: {{input.subject}}\n\nDescription:\n{{input.description}}\n\nProducts mentioned (if provided): {{input.products_mentioned}}",
+      "contentTokens": [
+        {
+          "type": "simpleText",
+          "rawString": "Analyse this engagement case and return your assessment as JSON.\n\nCase Number: "
+        },
+        { "type": "variable", "rawString": "input.case_number" },
+        { "type": "simpleText", "rawString": "\nCustomer: " },
+        { "type": "variable", "rawString": "input.customer_name" },
+        { "type": "simpleText", "rawString": "\nEngagement Category: " },
+        { "type": "variable", "rawString": "input.engagement_category" },
+        { "type": "simpleText", "rawString": "\nSubject: " },
+        { "type": "variable", "rawString": "input.subject" },
+        { "type": "simpleText", "rawString": "\n\nDescription:\n" },
+        { "type": "variable", "rawString": "input.description" },
+        { "type": "simpleText", "rawString": "\n\nProducts mentioned (if provided): " },
+        { "type": "variable", "rawString": "input.products_mentioned" }
+      ]
+    }
+  ],
+  "projectId": "4a625515-82f0-481b-b10a-11ea2fd6b91b"
+}

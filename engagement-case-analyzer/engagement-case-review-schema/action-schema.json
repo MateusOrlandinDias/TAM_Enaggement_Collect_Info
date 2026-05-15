@@ -1,0 +1,133 @@
+{
+  "$schema": "https://schemas.uipath.com/action-center/task-schema/v1",
+  "taskType": "engagement-case-review",
+  "displayName": "Engagement Case Review",
+  "description": "Review a Salesforce engagement Case and decide whether to send the outreach @mention to the Primary TAM.",
+  "handlerType": "app-driven",
+  "input": {
+    "type": "object",
+    "properties": {
+      "case_id": {
+        "type": "string",
+        "title": "Case Id",
+        "description": "Salesforce Case record Id (18-char)"
+      },
+      "case_number": {
+        "type": "string",
+        "title": "Case Number",
+        "description": "Human-readable case number (e.g. 02887690)"
+      },
+      "subject": {
+        "type": "string",
+        "title": "Subject"
+      },
+      "description": {
+        "type": "string",
+        "title": "Description",
+        "description": "Plain-text case description (HTML stripped)"
+      },
+      "customer_name": {
+        "type": "string",
+        "title": "Customer Name"
+      },
+      "customer_link": {
+        "type": "string",
+        "title": "Customer Link",
+        "format": "uri",
+        "description": "Salesforce Account URL — https://uipath.lightning.force.com/lightning/r/Account/<Id>/view"
+      },
+      "case_link": {
+        "type": "string",
+        "title": "Case Link",
+        "format": "uri",
+        "description": "Salesforce Case URL — https://uipath.lightning.force.com/lightning/r/Case/<Id>/view"
+      },
+      "primary_tam_name": {
+        "type": "string",
+        "title": "Primary TAM Name",
+        "description": "Full name of the Contact (Case.Contact.Name)"
+      },
+      "primary_tam_user_id": {
+        "type": "string",
+        "title": "Primary TAM User Id",
+        "description": "Salesforce User.Id resolved via Contact.Email → User.Email. Used for Chatter @mention."
+      },
+      "primary_tam_first_name": {
+        "type": "string",
+        "title": "Primary TAM First Name",
+        "description": "Used in outreach template greeting"
+      },
+      "account_type": {
+        "type": "string",
+        "title": "Account Type",
+        "description": "From Account_Type__c formula (e.g. Enterprise, Platinum Tier)"
+      },
+      "engagement_category": {
+        "type": "string",
+        "title": "Engagement Category",
+        "description": "From Engagement_Category__c (e.g. Enablement and Adoption)"
+      },
+      "priority": {
+        "type": "string",
+        "title": "Priority",
+        "enum": ["Low", "Medium", "High", "Critical"]
+      },
+      "products_mentioned": {
+        "type": "array",
+        "title": "Products Mentioned",
+        "items": { "type": "string" },
+        "description": "Products inferred by the Agent from the description"
+      },
+      "needs_questions": {
+        "type": "boolean",
+        "title": "Agent: Questions Needed",
+        "description": "true when the Agent found at least one missing sufficiency dimension"
+      },
+      "suggested_questions": {
+        "type": "array",
+        "title": "Agent: Suggested Questions",
+        "items": { "type": "string" },
+        "description": "Empty when needs_questions=false"
+      },
+      "agent_reasoning": {
+        "type": "string",
+        "title": "Agent: Reasoning Note",
+        "description": "Agent's brief explanation of which dimensions are missing"
+      },
+      "outreach_preview": {
+        "type": "string",
+        "title": "Outreach Preview",
+        "description": "Full Chatter message text the Flow will post on Approve (rendered with suggested_questions)"
+      }
+    },
+    "required": [
+      "case_id", "case_number", "subject", "description",
+      "customer_name", "customer_link", "case_link",
+      "primary_tam_name", "primary_tam_user_id", "primary_tam_first_name",
+      "needs_questions", "suggested_questions", "outreach_preview"
+    ]
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "decision": {
+        "type": "string",
+        "title": "Decision",
+        "enum": ["approve", "edit", "reject"],
+        "description": "approve = post outreach as-is; edit = use final_questions instead; reject = skip this case silently"
+      },
+      "final_questions": {
+        "type": "array",
+        "title": "Final Questions",
+        "items": { "type": "string" },
+        "description": "Reviewer-edited question list. Flow falls back to suggested_questions when empty and decision=approve."
+      },
+      "reviewer_comment": {
+        "type": "string",
+        "title": "Reviewer Comment",
+        "description": "Internal note from the reviewer (not posted to Chatter)"
+      }
+    },
+    "required": ["decision", "final_questions"]
+  }
+}
